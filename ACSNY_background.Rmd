@@ -1,0 +1,150 @@
+---
+title: "Background on ACS NY data with PUMS"
+output: github_document
+---
+  
+### Econ B2000, MA Econometrics
+### Kevin R Foster, the Colin Powell School at the City College of New York, CUNY
+
+### A different dataset...
+  
+Now we will pivot and use a different dataset, ACS data on wage, education (and lots of other things). You can get this data from the [course page](https://kfoster.ccny.cuny.edu/classes/fall2022/).
+
+We will work on an extract with only people who live in the state of New York. It includes quite granular geographic information, getting down to a person's neighborhood (referred to as PUMA). Well, that's not quite true. In NYC PUMA means a relatively small area although in upstate, where the population density is so much lower, a PUMA could be quite large in order to collect together enough people. In NYC, PUMA is a neighborhood.
+
+The PUMA codes are cryptic. You have to go to the codebook (or, in this case, the file PUMA_levels.csv or acs2017_codebook.txt from the zip file) to find out that 3801 codes for Washington Heights/Inwood, 3802 is Hamilton Heights/Manhattanville/West Harlem, etc. The program will happily calculate the average value for PUMA (type in *mean(PUMA)* and see for yourself!) but this is a meaningless value -- wtf is the average neighborhood code value!? A PUMA value here is like a zip code, it's a number but you wouldn't want to do number-type operations such as taking a mean. (Although R would let you do that.)
+
+If you want to select just people living in a particular neighborhood then you'd have to look at the list below. 
+
+PUMA | Neighborhood
+---- | ------------
+3701 | NYC-Bronx CD 8--Riverdale, Fieldston & Kingsbridge
+3702 | NYC-Bronx CD 12--Wakefield, Williamsbridge & Woodlawn
+3703 | NYC-Bronx CD 10--Co-op City, Pelham Bay & Schuylerville
+3704 | NYC-Bronx CD 11--Pelham Parkway, Morris Park & Laconia
+3705 | NYC-Bronx CD 3 & 6--Belmont, Crotona Park East & East Tremont
+3706 | NYC-Bronx CD 7--Bedford Park, Fordham North & Norwood
+3707 | NYC-Bronx CD 5--Morris Heights, Fordham South & Mount Hope
+3708 | NYC-Bronx CD 4--Concourse, Highbridge & Mount Eden
+3709 | NYC-Bronx CD 9--Castle Hill, Clason Point & Parkchester
+3710 | NYC-Bronx CD 1 & 2--Hunts Point, Longwood & Melrose
+3801 | NYC-Manhattan CD 12--Washington Heights, Inwood & Marble Hill
+3802 | NYC-Manhattan CD 9--Hamilton Heights, Manhattanville & West Harlem
+3803 | NYC-Manhattan CD 10--Central Harlem
+3804 | NYC-Manhattan CD 11--East Harlem
+3805 | NYC-Manhattan CD 8--Upper East Side
+3806 | NYC-Manhattan CD 7--Upper West Side & West Side
+3807 | NYC-Manhattan CD 4 & 5--Chelsea, Clinton & Midtown Business District
+3808 | NYC-Manhattan CD 6--Murray Hill, Gramercy & Stuyvesant Town
+3809 | NYC-Manhattan CD 3--Chinatown & Lower East Side
+3810 | NYC-Manhattan CD 1 & 2--Battery Park City, Greenwich Village & Soho
+3901 | NYC-Staten Island CD 3--Tottenville, Great Kills & Annadale
+3902 | NYC-Staten Island CD 2--New Springville & South Beach
+3903 | NYC-Staten Island CD 1--Port Richmond, Stapleton & Mariner's Harbor
+4001 | NYC-Brooklyn CD 1--Greenpoint & Williamsburg
+4002 | NYC-Brooklyn CD 4—Bushwick
+4003 | NYC-Brooklyn CD 3--Bedford-Stuyvesant
+4004 | NYC-Brooklyn CD 2--Brooklyn Heights & Fort Greene
+4005 | NYC-Brooklyn CD 6--Park Slope, Carroll Gardens & Red Hook
+4006 | NYC-Brooklyn CD 8--Crown Heights North & Prospect Heights
+4007 | NYC-Brooklyn CD 16--Brownsville & Ocean Hill
+4008 | NYC-Brooklyn CD 5--East New York & Starrett City
+4009 | NYC-Brooklyn CD 18--Canarsie & Flatlands
+4010 | NYC-Brooklyn CD 17--East Flatbush, Farragut & Rugby
+4011 | NYC-Brooklyn CD 9--Crown Heights South, Prospect Lefferts & Wingate
+4012 | NYC-Brooklyn CD 7--Sunset Park & Windsor Terrace
+4013 | NYC-Brooklyn CD 10--Bay Ridge & Dyker Heights
+4014 | NYC-Brooklyn CD 12--Borough Park, Kensington & Ocean Parkway
+4015 | NYC-Brooklyn CD 14--Flatbush & Midwood
+4016 | NYC-Brooklyn CD 15--Sheepshead Bay, Gerritsen Beach & Homecrest
+4017 | NYC-Brooklyn CD 11--Bensonhurst & Bath Beach
+4018 | NYC-Brooklyn CD 13--Brighton Beach & Coney Island
+4101 | NYC-Queens CD 1--Astoria & Long Island City
+4102 | NYC-Queens CD 3--Jackson Heights & North Corona
+4103 | NYC-Queens CD 7--Flushing, Murray Hill & Whitestone
+4104 | NYC-Queens CD 11--Bayside, Douglaston & Little Neck
+4105 | NYC-Queens CD 13--Queens Village, Cambria Heights & Rosedale
+4106 | NYC-Queens CD 8--Briarwood, Fresh Meadows & Hillcrest
+4107 | NYC-Queens CD 4--Elmhurst & South Corona
+4108 | NYC-Queens CD 6--Forest Hills & Rego Park
+4109 | NYC-Queens CD 2--Sunnyside & Woodside
+4110 | NYC-Queens CD 5--Ridgewood, Glendale & Middle Village
+4111 | NYC-Queens CD 9--Richmond Hill & Woodhaven
+4112 | NYC-Queens CD 12--Jamaica, Hollis & St. Albans
+4113 | NYC-Queens CD 10--Howard Beach & Ozone Park
+4114 | NYC-Queens CD 14--Far Rockaway, Breezy Point & Broad Channel
+
+So you want to tell R to treat PUMA as a factor.
+```{r}
+load("acs2017_ny_data.RData")
+attach(acs2017_ny)
+PUMA <- as.factor(PUMA)
+```
+And you might want to do that for some of the others too.
+
+I will leave you to worry over the recoding of the other variables, because it's good for the soul. I will show you 2 ways -- the quick and dirty way, and the fancy correct way.
+
+First the quick and dirty way.
+```{r}
+female <- as.factor(female)
+print(levels(female))
+levels(female) <- c("male","female")
+```
+Well, ways,
+```{r}
+educ_indx <- factor((educ_nohs + 2*educ_hs + 3*educ_somecoll + 4*educ_college + 5*educ_advdeg), levels=c(1,2,3,4,5),labels = c("No HS","HS","SmColl","Bach","Adv"))
+```
+
+(If you can figure out how that bit of code works, that would be good)
+
+These just type in the levels. But for things like PUMA, it could be a long list and might not even match every one. To do it better, we need help from an R package.
+
+```{r message=FALSE}
+library(tidyverse)
+library(plyr)
+levels_n <- read.csv("PUMA_levels.csv")
+levels_orig <- levels(PUMA) 
+levels_new <- join(data.frame(levels_orig),data.frame(levels_n))
+levels(PUMA) <- levels_new$New_Level
+```
+
+Those commands read in a little csv file that I had made, with the PUMA codes, then matches the old codes with the new complete text. Note that I'm lazy so codes in NY state outside of NYC are coded NA.
+
+R will do the summary differently when it knows the variable is a factor,
+```{r}
+summary(PUMA)
+summary(educ_indx)
+```
+
+To find mean and standard deviation by neighborhood, you could use something like this,
+
+```{r}
+ddply(acs2017_ny, .(PUMA), summarize, mean = round(mean(AGE), 2), sd = round(sd(AGE), 2), n_obsv = length(PUMA))
+```
+Although tapply would also work fine.
+
+Here's the 90th and 10th percentiles of wages by neighborhood,
+
+```{r}
+dat_use1 <- subset(acs2017_ny,((INCWAGE > 0) & in_NYC))
+ddply(dat_use1, .(PUMA), summarize, inc90 = quantile(INCWAGE,probs = 0.9), inc10 = quantile(INCWAGE,probs = 0.1), n_obs = length(INCWAGE))
+```
+
+You could also use table (or crosstabs) for factors with fewer items,
+
+```{r}
+table(educ_indx,female)
+xtabs(~educ_indx + female)
+```
+Want proportions instead of counts?
+```{r}
+prop.table(table(educ_indx,female))
+```
+
+Try it and see what happens if you use table with PUMA...
+
+This data includes not just whether a person has a college degree but also what field was the degree in: Economics or Psychology, for instance. Look over the codebook about DEGFIELD and DEGFIELDD (that second D means more detail) to see the codes. Maybe look at 10th and 90th percentiles by degree field?
+  
+```{r}
+detach()
+```
